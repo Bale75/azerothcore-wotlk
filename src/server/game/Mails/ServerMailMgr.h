@@ -128,7 +128,6 @@ struct ServerMail
 {
     ServerMail() = default;
     uint32 id{ 0 };
-    uint32 senderEntry{ 0 }; ///< Entry from creature_template. 0 for default "Customer Support" sender.
     uint32 moneyA{ 0 };
     uint32 moneyH{ 0 };
     std::string subject;
@@ -206,7 +205,6 @@ public:
      *
      * @param player The recipient player.
      * @param id The template ID.
-     * @param senderEntry Entry from creature_template. 0 for default "Customer Support" sender.
      * @param money Money reward.
      * @param items List of items to include in the mail.
      * @param conditions List of the conditions for the mail.
@@ -214,7 +212,7 @@ public:
      * @param body Mail body.
      * @param active Whether the mail template is active.
      */
-    void SendServerMail(Player* player, uint32 id, uint32 senderEntry, uint32 money, std::vector<ServerMailItems> const& items, std::vector<ServerMailCondition> const& conditions, std::string const& subject, std::string const& body) const;
+    void SendServerMail(Player* player, uint32 id, uint32 money, std::vector<ServerMailItems> const& items, std::vector<ServerMailCondition> const& conditions, std::string const& subject, std::string const& body) const;
 
     /**
      * @brief Retrieves the entire server mail store.

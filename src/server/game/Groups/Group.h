@@ -306,9 +306,9 @@ public:
     void NeedBeforeGreed(Loot* loot, WorldObject* pLootedObject);
     void MasterLoot(Loot* loot, WorldObject* pLootedObject);
     Rolls::iterator GetRoll(ObjectGuid Guid);
-    void CountTheRoll(Rolls::iterator roll);
+    void CountTheRoll(Rolls::iterator roll, Map* allowedMap);
     bool CountRollVote(ObjectGuid playerGUID, ObjectGuid Guid, uint8 Choise);
-    void EndRoll(Loot* loot);
+    void EndRoll(Loot* loot, Map* allowedMap);
     void RemovePlayerFromRolls(ObjectGuid guid);
 
     Rolls GetRolls() const { return RollId; }

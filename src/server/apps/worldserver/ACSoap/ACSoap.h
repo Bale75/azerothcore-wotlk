@@ -20,7 +20,6 @@
 
 #include "Define.h"
 #include <future>
-#include <memory>
 
 void process_message(struct soap* soap_message);
 void ACSoapThread(const std::string& host, uint16 port);
@@ -59,8 +58,6 @@ public:
     bool m_success;
     std::string m_printBuffer;
     std::promise<void> finishedPromise;
-    // keep-alive while a queued command still references this object; released in commandFinished()
-    std::shared_ptr<SOAPCommand> m_self;
 };
 
 #endif

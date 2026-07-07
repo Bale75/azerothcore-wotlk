@@ -1414,20 +1414,20 @@ bool Group::CountRollVote(ObjectGuid playerGUID, ObjectGuid Guid, uint8 Choice)
 
     if (roll->totalPass + roll->totalNeed + roll->totalGreed >= roll->totalPlayersRolling)
     {
-        CountTheRoll(rollI);
+        CountTheRoll(rollI, nullptr);
         return true;
     }
     return false;
 }
 
 //called when roll timer expires
-void Group::EndRoll(Loot* pLoot)
+void Group::EndRoll(Loot* pLoot, Map* allowedMap)
 {
     for (Rolls::iterator itr = RollId.begin(); itr != RollId.end();)
     {
         if ((*itr)->getLoot() == pLoot)
         {
-            CountTheRoll(itr);           //i don't have to edit player votes, who didn't vote ... he will pass
+            CountTheRoll(itr, allowedMap);           //i don't have to edit player votes, who didn't vote ... he will pass
             itr = RollId.begin();
         }
         else
@@ -1466,7 +1466,7 @@ void Group::RemovePlayerFromRolls(ObjectGuid guid)
     }
 }
 
-void Group::CountTheRoll(Rolls::iterator rollI)
+void Group::CountTheRoll(Rolls::iterator rollI, Map* allowedMap)
 {
     Roll* roll = *rollI;
     if (!roll->isValid())                                   // is loot already deleted ?
@@ -1491,7 +1491,7 @@ void Group::CountTheRoll(Rolls::iterator rollI)
                     continue;
 
                 player = ObjectAccessor::FindPlayer(itr->first);
-                if (!player)
+                if (!player || (allowedMap != nullptr && player->FindMap() != allowedMap))
                 {
                     --roll->totalNeed;
                     continue;
@@ -1555,7 +1555,7 @@ void Group::CountTheRoll(Rolls::iterator rollI)
                 roll->totalNeed = 0;
         }
     }
-    if (roll->totalNeed == 0 && roll->totalGreed > 0) // if (roll->totalNeed == 0 && ...), not else if, because totalNeed can be decremented above when a needing player is offline
+    if (roll->totalNeed == 0 && roll->totalGreed > 0) // pussywizard: if (roll->totalNeed == 0 && ...), not else if, because numbers can be modified above if player is on a different map
     {
         if (!roll->playerVote.empty())
         {
@@ -1571,7 +1571,7 @@ void Group::CountTheRoll(Rolls::iterator rollI)
                     continue;
 
                 player = ObjectAccessor::FindPlayer(itr->first);
-                if (!player)
+                if (!player || (allowedMap != nullptr && player->FindMap() != allowedMap))
                 {
                     --roll->totalGreed;
                     continue;
@@ -1669,7 +1669,7 @@ void Group::CountTheRoll(Rolls::iterator rollI)
                 roll->totalGreed = 0;
         }
     }
-    if (roll->totalNeed == 0 && roll->totalGreed == 0) // if, not else, because the totals can be decremented above when a rolling player is offline
+    if (roll->totalNeed == 0 && roll->totalGreed == 0) // pussywizard: if, not else, because numbers can be modified above if player is on a different map
     {
         SendLootAllPassed(*roll);
 

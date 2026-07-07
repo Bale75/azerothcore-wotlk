@@ -380,10 +380,9 @@ public:
     void SetLootRewardDisabled(bool disable) { DisableLootReward = disable; }
     [[nodiscard]] bool IsLootRewardDisabled() const { return DisableLootReward; }
     [[nodiscard]] bool IsDamageEnoughForLootingAndReward() const;
-    void LowerPlayerDamageReq(uint32 unDamage, bool damagedByPlayer = true, uint8 attackerLevel = 0);
+    void LowerPlayerDamageReq(uint32 unDamage, bool damagedByPlayer = true);
     void ResetPlayerDamageReq();
     [[nodiscard]] uint32 GetPlayerDamageReq() const;
-    [[nodiscard]] uint8 GetHighestPlayerAttackerLevel() const { return _highestPlayerAttackerLevel; }
 
     [[nodiscard]] uint32 GetOriginalEntry() const { return m_originalEntry; }
     void SetOriginalEntry(uint32 entry) { m_originalEntry = entry; }
@@ -555,7 +554,6 @@ private:
 
     uint32 _playerDamageReq;
     bool _damagedByPlayer;
-    uint8 _highestPlayerAttackerLevel;
     bool _isCombatMovementAllowed;
 };
 
