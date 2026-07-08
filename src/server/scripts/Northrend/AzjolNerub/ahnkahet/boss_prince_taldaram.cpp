@@ -103,15 +103,6 @@ struct npc_taldaram_flamesphere : public NullCreatureAI
         }
     }
 
-    void MovementInform(uint32 type, uint32 id) override
-    {
-        if (type == POINT_MOTION_TYPE && id == POINT_ORB)
-        {
-            me->DespawnOrUnsummon(1s);
-            DoCastSelf(SPELL_FLAME_SPHERE_DEATH_EFFECT, true);
-        }
-    }
-
     void IsSummonedBy(WorldObject* /*summoner*/) override
     {
         // Replace sphere instantly if sphere is summoned after prince death
@@ -123,6 +114,11 @@ struct npc_taldaram_flamesphere : public NullCreatureAI
 
         DoCastSelf(SPELL_FLAME_SPHERE_SPAWN_EFFECT);
         DoCastSelf(SPELL_FLAME_SPHERE_VISUAL);
+    }
+
+    void JustDied(Unit* /*who*/) override
+    {
+        DoCastSelf(SPELL_FLAME_SPHERE_DEATH_EFFECT);
     }
 
     void UpdateAI(uint32 diff) override
@@ -151,7 +147,7 @@ struct npc_taldaram_flamesphere : public NullCreatureAI
                 float angle = me->GetAngle(&victimPos) + angleOffset;
                 float x = me->GetPositionX() + DATA_SPHERE_DISTANCE * cos(angle);
                 float y = me->GetPositionY() + DATA_SPHERE_DISTANCE * std::sin(angle);
-                me->GetMotionMaster()->MovePoint(POINT_ORB, x, y, me->GetPositionZ(), FORCED_MOVEMENT_WALK);
+                me->GetMotionMaster()->MovePoint(POINT_ORB, x, y, me->GetPositionZ());
 
                 moveTimer = 0;
             }

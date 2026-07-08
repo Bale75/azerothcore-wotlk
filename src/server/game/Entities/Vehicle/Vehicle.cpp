@@ -359,7 +359,12 @@ bool Vehicle::AddPassenger(Unit* unit, int8 seatId)
             return false;
 
         if (!seat->second.IsEmpty())
-            return false;
+        {
+            if (Unit* passenger = ObjectAccessor::GetUnit(*GetBase(), seat->second.Passenger.Guid))
+                passenger->ExitVehicle();
+
+            seat->second.Passenger.Guid.Clear();
+        }
 
         ASSERT(seat->second.IsEmpty());
     }

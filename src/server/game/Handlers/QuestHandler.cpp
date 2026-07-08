@@ -27,7 +27,6 @@
 #include "Opcodes.h"
 #include "Player.h"
 #include "QuestDef.h"
-#include "QuestPackets.h"
 #include "ScriptMgr.h"
 #include "World.h"
 #include "WorldPacket.h"
@@ -383,23 +382,29 @@ void WorldSession::HandleQuestgiverCancel(WorldPacket& /*recvData*/)
     _player->PlayerTalkClass->SendCloseGossip();
 }
 
-void WorldSession::HandleQuestLogSwapQuest(WorldPackets::Quest::QuestLogSwapQuest& packet)
+void WorldSession::HandleQuestLogSwapQuest(WorldPacket& recvData)
 {
-    if (packet.Slot1 == packet.Slot2 || packet.Slot1 >= MAX_QUEST_LOG_SIZE || packet.Slot2 >= MAX_QUEST_LOG_SIZE)
+    uint8 slot1, slot2;
+    recvData >> slot1 >> slot2;
+
+    if (slot1 == slot2 || slot1 >= MAX_QUEST_LOG_SIZE || slot2 >= MAX_QUEST_LOG_SIZE)
         return;
 
-    LOG_DEBUG("network", "WORLD: Received CMSG_QUESTLOG_SWAP_QUEST slot 1 = {}, slot 2 = {}", packet.Slot1, packet.Slot2);
+    LOG_DEBUG("network", "WORLD: Received CMSG_QUESTLOG_SWAP_QUEST slot 1 = {}, slot 2 = {}", slot1, slot2);
 
-    GetPlayer()->SwapQuestSlot(packet.Slot1, packet.Slot2);
+    GetPlayer()->SwapQuestSlot(slot1, slot2);
 }
 
-void WorldSession::HandleQuestLogRemoveQuest(WorldPackets::Quest::QuestLogRemoveQuest& packet)
+void WorldSession::HandleQuestLogRemoveQuest(WorldPacket& recvData)
 {
-    LOG_DEBUG("network", "WORLD: Received CMSG_QUESTLOG_REMOVE_QUEST slot = {}", packet.Slot);
+    uint8 slot;
+    recvData >> slot;
 
-    if (packet.Slot < MAX_QUEST_LOG_SIZE)
+    LOG_DEBUG("network", "WORLD: Received CMSG_QUESTLOG_REMOVE_QUEST slot = {}", slot);
+
+    if (slot < MAX_QUEST_LOG_SIZE)
     {
-        if (uint32 questId = _player->GetQuestSlotQuestId(packet.Slot))
+        if (uint32 questId = _player->GetQuestSlotQuestId(slot))
         {
             if (!_player->TakeQuestSourceItem(questId, true))
                 return;                                     // can't un-equip some items, reject quest cancel
@@ -437,17 +442,20 @@ void WorldSession::HandleQuestLogRemoveQuest(WorldPackets::Quest::QuestLogRemove
             }
         }
 
-        _player->SetQuestSlot(packet.Slot, 0);
+        _player->SetQuestSlot(slot, 0);
 
         _player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_QUEST_ABANDONED, 1);
     }
 }
 
-void WorldSession::HandleQuestConfirmAccept(WorldPackets::Quest::QuestConfirmAcceptClient& packet)
+void WorldSession::HandleQuestConfirmAccept(WorldPacket& recvData)
 {
-    LOG_DEBUG("network", "WORLD: Received CMSG_QUEST_CONFIRM_ACCEPT quest = {}", packet.QuestId);
+    uint32 questId;
+    recvData >> questId;
 
-    if (Quest const* quest = sObjectMgr->GetQuestTemplate(packet.QuestId))
+    LOG_DEBUG("network", "WORLD: Received CMSG_QUEST_CONFIRM_ACCEPT quest = {}", questId);
+
+    if (Quest const* quest = sObjectMgr->GetQuestTemplate(questId))
     {
         if (!quest->HasFlag(QUEST_FLAGS_PARTY_ACCEPT))
             return;
@@ -522,18 +530,21 @@ void WorldSession::HandleQuestgiverCompleteQuest(WorldPacket& recvData)
     }
 }
 
-void WorldSession::HandleQuestgiverQuestAutoLaunch(WorldPackets::Quest::QuestGiverQuestAutoLaunch& /*packet*/)
+void WorldSession::HandleQuestgiverQuestAutoLaunch(WorldPacket& /*recvPacket*/)
 {
 }
 
-void WorldSession::HandlePushQuestToParty(WorldPackets::Quest::PushQuestToParty& packet)
+void WorldSession::HandlePushQuestToParty(WorldPacket& recvPacket)
 {
-    if (!_player->CanShareQuest(packet.QuestId))
+    uint32 questId;
+    recvPacket >> questId;
+
+    if (!_player->CanShareQuest(questId))
         return;
 
-    LOG_DEBUG("network", "WORLD: Received CMSG_PUSHQUESTTOPARTY quest = {}", packet.QuestId);
+    LOG_DEBUG("network", "WORLD: Received CMSG_PUSHQUESTTOPARTY quest = {}", questId);
 
-    if (Quest const* quest = sObjectMgr->GetQuestTemplate(packet.QuestId))
+    if (Quest const* quest = sObjectMgr->GetQuestTemplate(questId))
     {
         if (Group* group = _player->GetGroup())
         {
@@ -550,7 +561,7 @@ void WorldSession::HandlePushQuestToParty(WorldPackets::Quest::PushQuestToParty&
                     continue;
                 }
 
-                if (player->GetQuestStatus(packet.QuestId) == QUEST_STATUS_COMPLETE)
+                if (player->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
                 {
                     _player->SendPushToPartyResponse(player, QUEST_PARTY_MSG_FINISH_QUEST);
                     continue;
@@ -602,16 +613,21 @@ void WorldSession::HandlePushQuestToParty(WorldPackets::Quest::PushQuestToParty&
     }
 }
 
-void WorldSession::HandleQuestPushResult(WorldPackets::Quest::QuestPushResultClient& packet)
+void WorldSession::HandleQuestPushResult(WorldPacket& recvPacket)
 {
-    if (_player->GetDivider() && _player->GetDivider() == packet.PlayerGuid)
+    ObjectGuid guid;
+    uint32 questId;
+    uint8 msg;
+    recvPacket >> guid >> questId >> msg;
+
+    if (_player->GetDivider() && _player->GetDivider() == guid)
     {
         if (Player* player = ObjectAccessor::GetPlayer(*_player, _player->GetDivider()))
         {
-            WorldPackets::Quest::QuestPushResult questPushResult;
-            questPushResult.PlayerGuid = _player->GetGUID();
-            questPushResult.QuestShareMessage = packet.QuestShareMessage;
-            player->SendDirectMessage(questPushResult.Write());
+            WorldPacket data(MSG_QUEST_PUSH_RESULT, 8 + 4 + 1);
+            data << _player->GetGUID();
+            data << uint8(msg);                             // valid values: 0-8
+            player->SendDirectMessage(&data);
             _player->SetDivider();
         }
     }

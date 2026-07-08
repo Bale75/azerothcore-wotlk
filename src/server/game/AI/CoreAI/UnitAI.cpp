@@ -292,14 +292,10 @@ SpellCastResult UnitAI::DoCastAOE(uint32 spellId, bool triggered)
 
 /**
  * @brief Cast the spell on a random unit from the threat list
- *
- * @param aura Optional aura filter forwarded to SelectTarget: a positive value
- *             requires the aura on the target, a negative value excludes targets
- *             that already have it.
  */
-SpellCastResult UnitAI::DoCastRandomTarget(uint32 spellId, uint32 threatTablePosition, float dist, bool playerOnly, bool triggered, bool withTank, int32 aura)
+SpellCastResult UnitAI::DoCastRandomTarget(uint32 spellId, uint32 threatTablePosition, float dist, bool playerOnly, bool triggered, bool withTank)
 {
-    if (Unit* target = SelectTarget(SelectTargetMethod::Random, threatTablePosition, dist, playerOnly, withTank, aura))
+    if (Unit* target = SelectTarget(SelectTargetMethod::Random, threatTablePosition, dist, playerOnly, withTank))
     {
         return DoCast(target, spellId, triggered);
     }

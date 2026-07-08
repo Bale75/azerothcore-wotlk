@@ -78,7 +78,7 @@ private:
             {
                 if (CreatureData const* data = sObjectMgr->GetCreatureData(obj.guid))
                 {
-                    entry = data->id;
+                    entry = data->id1;
                     mapId = data->mapid;
                     x = data->posX;
                     y = data->posY;
